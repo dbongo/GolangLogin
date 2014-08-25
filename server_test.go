@@ -2,7 +2,6 @@
 	Tests for server.
 	Run with go test -v
 */
-
 package main
 
 import (

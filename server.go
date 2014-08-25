@@ -4,19 +4,25 @@ import (
 	"errors"
 	"flag"
 	"github.com/gin-gonic/gin"
+	"log"
 	"runtime"
 	"time"
 )
 
 var (
-	adress     string
-	port       string
+	adress string
+	port   string
+	debug  bool
+	//Will move this to a config file later.
 	jwt_secret = "mySuperDuperMegaSecret"
 )
 
 func init() {
 	flag.StringVar(&adress, "adress", "localhost", "Adress on which the server should be running on")
 	flag.StringVar(&port, "port", "8080", "Port on which the server should be running on")
+	flag.BoolVar(&debug, "debug", false, "Enables debug mode")
+	flag.Parse()
+	//Use maximum number of cores for optimal performance.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
@@ -35,15 +41,18 @@ func main() {
 				Correct data were sent.
 				Get user data from DB here.
 			*/
+			if debug {
+				log.Printf("Email: %s Password: %s", user.Email, user.Password)
+			}
+			claims := make(map[string]interface{})
+			claims["ID"] = "100"
+			claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+			tokenString, err := generateToken([]byte(jwt_secret), claims)
+			if err != nil {
+				c.Fail(500, err)
+			}
+			c.JSON(200, gin.H{"token": tokenString})
 		}
-		claims := make(map[string]interface{})
-		claims["ID"] = "100"
-		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-		tokenString, err := generateToken([]byte(jwt_secret), claims)
-		if err != nil {
-			c.Fail(500, errors.New("Could not generate token"))
-		}
-		c.JSON(200, gin.H{"token": tokenString})
 	})
 
 	//Login route with the choosen provider.

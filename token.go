@@ -6,10 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	errorWhileGeneratingToken = errors.New("An error occured while generating token")
-)
-
 func tokenMiddleWare(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_, err := jwt_lib.ParseFromRequest(c.Request, func(token *jwt_lib.Token) ([]byte, error) {
@@ -26,7 +22,7 @@ func generateToken(secret []byte, claims map[string]interface{}) (string, error)
 	token.Claims = claims
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
-		return "", errorWhileGeneratingToken
+		return "", errors.New("An error occured while generating token")
 	}
 	return tokenString, nil
 }
