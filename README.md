@@ -16,6 +16,6 @@ MIT see LICENSE.md for more information.
 
 To install this software you need a go compiler, a mongoDB running and some dependecies.
 
-Dependecies
+Dependecies:
 * go get github.com/tools/godep
 * godep get
