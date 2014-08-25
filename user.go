@@ -1,5 +1,9 @@
 package main
 
+import (
+	"gopkg.in/mgo.v2/bson"
+)
+
 /*
 	This struct describes an user.
 	email and password is required.
@@ -10,8 +14,9 @@ package main
 		"password":"foobar"
 	}
 */
-type user struct {
-	Id       string `gorethink:"id,omitempty"`
-	Email    string `gorethink:"email" binding:"required"`
-	Password string `gorethink:"password" binding:"required"`
+type User struct {
+	//If UserID is empty, don't create json with an empty field.
+	UserID   bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	Email    string        `json:"email" binding:"required"`
+	Password string        `json:"password" binding:"required"`
 }
