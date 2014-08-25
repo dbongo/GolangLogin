@@ -1,0 +1,25 @@
+{
+	"ImportPath": "github.com/christopherL91/LoginServer",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v1.0.1-3-gef77e10",
+			"Rev": "ef77e106a6bc1d064372a7e2bd1f5d03f40f20b7"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin",
+			"Comment": "v0.4-3-gb3f322c",
+			"Rev": "b3f322c5fc19d68e297ae0a175770b232eae0bc1"
+		},
+		{
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Rev": "afa7ae29ca847252b56d9279b6a012c1a7a5e225"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-262-g1eff2ca",
+			"Rev": "1eff2caf156994f97fdcda660416c841f4321f0f"
+		}
+	]
+}
