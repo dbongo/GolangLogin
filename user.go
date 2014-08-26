@@ -16,7 +16,7 @@ import (
 */
 type User struct {
 	//If UserID is empty, don't create json with an empty field.
-	UserID   bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	UserID   bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Email    string        `json:"email" binding:"required"`
 	Password string        `json:"password" binding:"required"`
 }

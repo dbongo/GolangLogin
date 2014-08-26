@@ -3,6 +3,16 @@
 	"GoVersion": "go1.3.1",
 	"Deps": [
 		{
+			"ImportPath": "code.google.com/p/go.crypto/bcrypt",
+			"Comment": "null-218",
+			"Rev": "f3cebac2bd11c2bf03c15bfa4c66688ad02a0a40"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/blowfish",
+			"Comment": "null-218",
+			"Rev": "f3cebac2bd11c2bf03c15bfa4c66688ad02a0a40"
+		},
+		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
 			"Comment": "v1.0.1-3-gef77e10",
 			"Rev": "ef77e106a6bc1d064372a7e2bd1f5d03f40f20b7"
@@ -20,6 +30,10 @@
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
 			"Comment": "1.5.0-262-g1eff2ca",
 			"Rev": "1eff2caf156994f97fdcda660416c841f4321f0f"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Rev": "c9fd3712fbf3e92924c974dce16da2d322508fe2"
 		}
 	]
 }
