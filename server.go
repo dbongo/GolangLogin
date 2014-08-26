@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"
 	"log"
+	"net/http"
 	"runtime"
 )
 
@@ -63,14 +64,19 @@ func main() {
 			}
 			token, err := getToken(user.Email, user.Password, mgo_session)
 			if err != nil {
-				c.Fail(400, err)
+				c.Fail(http.StatusInternalServerError, err)
 				return
 			}
-			c.JSON(200, gin.H{"token": token})
+			c.JSON(http.StatusOK, gin.H{"token": token})
 		}
 	})
 
-	// Login route with the choosen provider.
+	/*
+		Login route with one of the choosen following providers.
+		* Facebook
+		* Google
+		* Linkedin
+	*/
 	public.GET("/login/:provider", func(c *gin.Context) {
 		provider := c.Params.ByName("provider")
 		mgo_session := session.Copy()
@@ -79,14 +85,26 @@ func main() {
 		switch provider {
 		case "facebook":
 			// Handle facebook login here.
+			facebookConf, err := newFacebookConf()
+			if err != nil {
+				c.Fail(http.StatusInternalServerError, err)
+				return
+			}
+			c.Redirect(http.StatusMovedPermanently, facebookConf.AuthCodeURL(""))
 		case "google":
 			// Handle google login here.
+			googleConf, err := newGoogleConf()
+			if err != nil {
+				c.Fail(http.StatusInternalServerError, err)
+				return
+			}
+			c.Redirect(http.StatusMovedPermanently, googleConf.AuthCodeURL(""))
 		default:
 			/*
 				The user did not choose any appropriate provider.
-				Send status code 400 back to client.
+				Send status code 404 back to client.
 			*/
-			c.Fail(400, errors.New("Unknown provider"))
+			c.Fail(http.StatusNotFound, errors.New("Unknown provider"))
 			return
 		}
 	})
@@ -107,16 +125,31 @@ func main() {
 			}
 			token, err := createUserAndGetToken(user.Email, user.Password, mgo_session)
 			if err != nil {
-				c.Fail(500, err)
+				c.Fail(http.StatusInternalServerError, err)
 				return
 			}
-			c.JSON(200, gin.H{"token": token})
+			c.JSON(http.StatusOK, gin.H{"token": token})
 		}
+	})
+
+	/*
+		Callback for several social media providers.
+	*/
+	public.GET("/callback/facebook", func(c *gin.Context) {
+		log.Println("facebook")
+	})
+
+	public.GET("/callback/google", func(c *gin.Context) {
+		log.Println("google")
+	})
+
+	public.GET("/callback/linkedin", func(c *gin.Context) {
+		log.Println("linkedin")
 	})
 
 	// Get the current API version.
 	public.GET("/version", func(c *gin.Context) {
-		c.JSON(200, gin.H{"version": version, "author": "Christopher Lillthors"})
+		c.JSON(http.StatusOK, gin.H{"version": version, "author": "Christopher Lillthors"})
 	})
 
 	/*
@@ -130,19 +163,19 @@ func main() {
 		defer mgo_session.Close()
 		users, err := getAllUsers(session)
 		if err != nil {
-			c.Fail(500, err)
+			c.Fail(http.StatusInternalServerError, err)
 			return
 		}
 		c.JSON(200, users)
 	})
 
 	private.GET("/users/:id", func(c *gin.Context) {
-		id := c.Params.ByName("id")
 		mgo_session := session.Clone()
 		defer mgo_session.Close()
+		id := c.Params.ByName("id")
 		user, err := getUserWithID(id, mgo_session)
 		if err != nil {
-			c.Fail(500, err)
+			c.Fail(http.StatusInternalServerError, err)
 			return
 		}
 		c.JSON(200, user)
@@ -157,7 +190,7 @@ func main() {
 			defer mgo_session.Close()
 			err := updateUser(id, user, mgo_session)
 			if err != nil {
-				c.Fail(500, err)
+				c.Fail(http.StatusInternalServerError, err)
 				return
 			}
 			c.JSON(200, gin.H{"Status": "ok"})
