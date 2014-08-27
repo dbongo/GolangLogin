@@ -22,7 +22,7 @@ var (
 	*/
 	DBname         = "GollyLogin"
 	UserCollection = "Users"
-	jwt_secret     = "mySuperDuperMegaSecret"
+	jwt_secret     = "I<3Unicorns" // I mean... Who doesn't?
 )
 
 func init() {
@@ -49,13 +49,13 @@ func main() {
 	private := r.Group("/api/authorized", tokenMiddleWare(jwt_secret))
 
 	/*
-		Public routes section
+					Public routes section
 		----------------------------------------------------------------
 	*/
 
 	// Local login route.
 	public.POST("/login", func(c *gin.Context) {
-		user := new(User)
+		user := new(LocalUser)
 		if c.Bind(user) {
 			mgo_session := session.Copy()
 			defer mgo_session.Close()
@@ -99,6 +99,14 @@ func main() {
 				return
 			}
 			c.Redirect(http.StatusMovedPermanently, googleConf.AuthCodeURL(""))
+		case "linkedin":
+			// Handle linkedin login here.
+			linkedinConf, err := newLinkedInConf()
+			if err != nil {
+				c.Fail(http.StatusInternalServerError, err)
+				return
+			}
+			c.Redirect(http.StatusMovedPermanently, linkedinConf.AuthCodeURL(""))
 		default:
 			/*
 				The user did not choose any appropriate provider.
@@ -110,7 +118,7 @@ func main() {
 	})
 
 	public.POST("/create", func(c *gin.Context) {
-		user := new(User)
+		user := new(LocalUser)
 		if c.Bind(user) {
 			/*
 				Correct data were sent.
@@ -133,7 +141,8 @@ func main() {
 	})
 
 	/*
-		Callback for several social media providers.
+				Callback for several social media providers.
+		----------------------------------------------------------------
 	*/
 	public.GET("/callback/facebook", func(c *gin.Context) {
 		log.Println("facebook")
@@ -169,6 +178,7 @@ func main() {
 		c.JSON(200, users)
 	})
 
+	// Get a user with id.
 	private.GET("/users/:id", func(c *gin.Context) {
 		mgo_session := session.Clone()
 		defer mgo_session.Close()
@@ -181,10 +191,10 @@ func main() {
 		c.JSON(200, user)
 	})
 
-	// Update an existing user in the list of users.
+	// Update an existing user with id in the list of users.
 	private.PATCH("/users/:id", func(c *gin.Context) {
 		id := c.Params.ByName("id")
-		user := new(User)
+		user := new(UpdateLocalUser)
 		if c.Bind(user) {
 			mgo_session := session.Clone()
 			defer mgo_session.Close()

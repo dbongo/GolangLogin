@@ -18,7 +18,7 @@ var (
 	This function checks if user is in database and returns an token if so.
 */
 func getToken(email, password string, session *mgo.Session) (string, error) {
-	user := new(User)
+	user := new(LocalUser)
 	c := session.DB(DBname).C(UserCollection)
 	session.SetMode(mgo.Monotonic, true)
 
@@ -50,7 +50,7 @@ func createUserAndGetToken(email, password string, session *mgo.Session) (string
 	if err != nil {
 		return "", err
 	}
-	user := &User{
+	user := &LocalUser{
 		UserID:   bson.NewObjectId(),
 		Email:    email,
 		Password: hashedPass,
@@ -70,46 +70,46 @@ func createUserAndGetToken(email, password string, session *mgo.Session) (string
 	return token, nil
 }
 
-func getUserWithID(id string, session *mgo.Session) (*User, error) {
-	user := new(User)
+func getUserWithID(id string, session *mgo.Session) (*ShowLocalUser, error) {
+	user := new(ShowLocalUser)
 	c := session.DB(DBname).C(UserCollection)
 	session.SetMode(mgo.Monotonic, true)
-	err := c.FindId(id).One(user)
+	err := c.FindId(bson.ObjectIdHex(id)).One(user)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func getAllUsers(session *mgo.Session) ([]*User, error) {
-	var users []*User
+func getAllUsers(session *mgo.Session) ([]ShowLocalUser, error) {
+	var users []ShowLocalUser
 	c := session.DB(DBname).C(UserCollection)
 	session.SetMode(mgo.Monotonic, true)
-	err := c.Find(bson.M{}).All(users)
+	err := c.Find(bson.M{}).All(&users)
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
-func updateUser(id string, user *User, session *mgo.Session) error {
+func updateUser(id string, user *UpdateLocalUser, session *mgo.Session) error {
 	c := session.DB(DBname).C(UserCollection)
 	session.SetMode(mgo.Monotonic, true)
 	var err error
 	if user.Password == "" {
-		// User did not post any password.
-		err = c.Update(bson.M{"_id": user.UserID}, bson.M{"email": user.Email})
+		// LocalUser did not post any password.
+		err = c.Update(bson.M{"_id": bson.ObjectIdHex(id)}, bson.M{"$set": bson.M{"email": user.Email}})
 		if err != nil {
 			return err
 		}
 	}
 	if user.Email == "" {
-		// User did not post any email.
+		// LocalUser did not post any email.
 		hashedPass, err := hashPass(user.Password)
 		if err != nil {
 			return err
 		}
-		err = c.Update(bson.M{"_id": user.UserID}, bson.M{"password": hashedPass})
+		err = c.Update(bson.M{"_id": bson.ObjectIdHex(id)}, bson.M{"$set": bson.M{"password": hashedPass}})
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func updateUser(id string, user *User, session *mgo.Session) error {
 	if err != nil {
 		return err
 	}
-	err = c.Update(bson.M{"_id": user.UserID}, bson.M{"email": user.Email, "password": hashedPass})
+	err = c.Update(bson.M{"_id": bson.ObjectIdHex(id)}, bson.M{"$set": bson.M{"email": user.Email, "password": hashedPass}})
 	if err != nil {
 		return err
 	}
