@@ -23,6 +23,10 @@
 			"Rev": "b3f322c5fc19d68e297ae0a175770b232eae0bc1"
 		},
 		{
+			"ImportPath": "github.com/golang/oauth2",
+			"Rev": "38c48926828cdb44d8de75fea8e71a2ebe7a9bd2"
+		},
+		{
 			"ImportPath": "github.com/julienschmidt/httprouter",
 			"Rev": "afa7ae29ca847252b56d9279b6a012c1a7a5e225"
 		},

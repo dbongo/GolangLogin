@@ -14,17 +14,18 @@ import (
 		"password":"foobar"
 	}
 */
+
 type LocalUser struct {
-	//If UserID is empty, don't create json with an empty field.
-	UserID   bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	//If MongoID is empty, don't create json with an empty field.
+	MongoID  bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Email    string        `json:"email" binding:"required"`
 	Password string        `json:"password" binding:"required"`
 }
 
 // Use this type if you need to show the user for a user.
 type ShowLocalUser struct {
-	UserID bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Email  string        `json:"email" binding:"required"`
+	MongoID bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Email   string        `json:"email" binding:"required"`
 }
 
 // Use this type if you need to update an user.
@@ -35,22 +36,26 @@ type UpdateLocalUser struct {
 
 // Type for a new facebook user.
 type FacebookUser struct {
+	MongoID bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
 	// Used for updating profile pic.
-	FB_ID    string `json:"id"`
-	Fullname string `json:"name"`
-	Email    string `json:"email"`
+	ID        string   `json:"id" bson:"facebookID"`
+	Fullname  string   `json:"name"`
+	Email     string   `json:"email"`
+	Education []string `json:"education"`
 }
 
 // Type for a new google user.
 type GoogleUser struct {
-	Google_ID string `json:"id"`
-	Fullname  string `json:"name"`
-	Email     string `json:"email"`
+	MongoID  bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID       string        `json:"id" bson:"googleID"`
+	Fullname string        `json:"name"`
+	Email    string        `json:"email"`
 }
 
 // Type for a new linkedin user.
 type LinkedinUser struct {
-	Linkedin_ID string `json:"id"`
-	Fullname    string `json:"name"`
-	Email       string `json:"email"`
+	MongoID  bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID       string        `json:"id" bson:"linkedinID"`
+	Fullname string        `json:"name"`
+	Email    string        `json:"email"`
 }

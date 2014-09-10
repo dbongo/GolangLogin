@@ -18,7 +18,7 @@ var (
 	test_password = "bar"
 )
 
-func createJSON(user *User, t *testing.T) *bytes.Buffer {
+func createJSON(user *LocalUser, t *testing.T) *bytes.Buffer {
 	data, err := json.Marshal(user)
 	if err != nil {
 		t.FailNow()
@@ -37,7 +37,7 @@ func TestServer(t *testing.T) {
 	})
 	Convey("Should be able to login with user", t, func() {
 		client := new(http.Client)
-		user := &User{Email: test_email, Password: test_password}
+		user := &LocalUser{Email: test_email, Password: test_password}
 		data := createJSON(user, t)
 		res, err := client.Post(baseURL+"login", "application/json", data)
 		if err != nil {

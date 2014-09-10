@@ -8,8 +8,8 @@ import (
 // Gin middleware. Checks for valid tokens in the http auth header.
 func tokenMiddleWare(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, err := jwt_lib.ParseFromRequest(c.Request, func(token *jwt_lib.Token) ([]byte, error) {
-			return []byte(secret), nil
+		_, err := jwt_lib.ParseFromRequest(c.Request, func(token *jwt_lib.Token) (interface{}, error) {
+			return secret, nil
 		})
 		if err != nil {
 			c.Fail(401, err)

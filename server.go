@@ -1,18 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/oauth2"
 	mgo "gopkg.in/mgo.v2"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"runtime"
 )
 
 var (
-	adress  string
-	port    string
+	adress  string = "localhost"
+	port    string = "3000"
 	debug   bool
 	version = "1.0"
 	session *mgo.Session
@@ -23,26 +26,44 @@ var (
 	DBname         = "GollyLogin"
 	UserCollection = "Users"
 	jwt_secret     = "I<3Unicorns" // I mean... Who doesn't?
+	facebookConf   = new(oauth2.Config)
+	googleConf     = new(oauth2.Config)
+	// linkedinConf   = new(oauth2.Config)
 )
 
 func init() {
-	// Will move this section to a config file later.
-	flag.StringVar(&adress, "adress", "localhost", "Adress on which the server should be running on")
-	flag.StringVar(&port, "port", "3000", "Port on which the server should be running on")
 	flag.BoolVar(&debug, "debug", false, "Enables debug mode")
 	flag.Parse()
 
 	var err error
 	session, err = mgo.Dial("127.0.0.1")
 	if err != nil {
-		log.Fatalln(err.Error())
+		panic(err)
 	}
+
+	facebookConf, err = newFacebookConf()
+	if err != nil {
+		panic(err)
+	}
+
+	googleConf, err = newGoogleConf()
+	if err != nil {
+		panic(err)
+	}
+
+	// linkedinConf, err = newLinkedInConf()
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// Use maximum number of cores for optimal performance.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
 	r := gin.Default()
+	//Use CORS as a global middleware.
+	r.Use(CORSMiddleware())
+
 	// Public route group.
 	public := r.Group("/api")
 	// Private route group with jwt token middleware attached.
@@ -84,29 +105,13 @@ func main() {
 
 		switch provider {
 		case "facebook":
-			// Handle facebook login here.
-			facebookConf, err := newFacebookConf()
-			if err != nil {
-				c.Fail(http.StatusInternalServerError, err)
-				return
-			}
-			c.Redirect(http.StatusMovedPermanently, facebookConf.AuthCodeURL(""))
+			c.Redirect(http.StatusTemporaryRedirect, facebookConf.AuthCodeURL("unicorn", "offline", "auto"))
 		case "google":
-			// Handle google login here.
-			googleConf, err := newGoogleConf()
-			if err != nil {
-				c.Fail(http.StatusInternalServerError, err)
-				return
-			}
-			c.Redirect(http.StatusMovedPermanently, googleConf.AuthCodeURL(""))
+			c.Redirect(http.StatusTemporaryRedirect, googleConf.AuthCodeURL("unicorn", "offline", "auto"))
 		case "linkedin":
-			// Handle linkedin login here.
-			linkedinConf, err := newLinkedInConf()
-			if err != nil {
-				c.Fail(http.StatusInternalServerError, err)
-				return
-			}
-			c.Redirect(http.StatusMovedPermanently, linkedinConf.AuthCodeURL(""))
+			// c.Redirect(http.StatusTemporaryRedirect, linkedinConf.AuthCodeURL("unicorn", "offline", "auto"))
+		case "kth":
+			c.Redirect(http.StatusTemporaryRedirect, "https://login.kth.se/login?service=http://localhost:3000/api/callback/kth")
 		default:
 			/*
 				The user did not choose any appropriate provider.
@@ -131,7 +136,7 @@ func main() {
 			if debug {
 				log.Printf("Email: %s Password: %s", user.Email, user.Password)
 			}
-			token, err := createUserAndGetToken(user.Email, user.Password, mgo_session)
+			token, err := createLocalUserAndGetToken(user.Email, user.Password, mgo_session)
 			if err != nil {
 				c.Fail(http.StatusInternalServerError, err)
 				return
@@ -145,20 +150,54 @@ func main() {
 		----------------------------------------------------------------
 	*/
 	public.GET("/callback/facebook", func(c *gin.Context) {
-		log.Println("facebook")
+		code := c.Request.URL.Query().Get("code")
+		mgo_session := session.Copy()
+		defer mgo_session.Close()
+
+		t, err := facebookConf.NewTransportWithCode(code)
+		if err != nil {
+			c.Fail(http.StatusInternalServerError, err)
+			return
+		}
+		client := http.Client{Transport: t}
+		res, err := client.Get("https://graph.facebook.com/me")
+		if err != nil {
+			c.Fail(http.StatusInternalServerError, err)
+			return
+		}
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			c.Fail(http.StatusInternalServerError, err)
+			return
+		}
+		var user map[string]interface{}
+		if err := json.Unmarshal(body, &user); err != nil {
+			c.Fail(http.StatusInternalServerError, err)
+			return
+		}
+		c.JSON(200, user)
+		// token, err := lookUpProviderUserAndGetToken(user, session)
+		// if err != nil {
+		// 	c.Fail(http.StatusInternalServerError, err)
+		// 	return
+		// }
+		// c.JSON(http.StatusOK, gin.H{"token": token})
 	})
 
 	public.GET("/callback/google", func(c *gin.Context) {
-		log.Println("google")
+		mgo_session := session.Copy()
+		defer mgo_session.Close()
 	})
 
 	public.GET("/callback/linkedin", func(c *gin.Context) {
-		log.Println("linkedin")
+		mgo_session := session.Copy()
+		defer mgo_session.Close()
 	})
 
-	// Get the current API version.
-	public.GET("/version", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"version": version, "author": "Christopher Lillthors"})
+	public.GET("/callback/kth", func(c *gin.Context) {
+		// ticket := c.Request.URL.Query().Get("ticket")
+
+		// c.JSON(200, gin.H{"user": string(data)})
 	})
 
 	/*
